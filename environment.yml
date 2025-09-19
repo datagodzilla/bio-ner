@@ -74,7 +74,6 @@ dependencies:
       - en-core-web-sm==3.8.0
       - flask==3.1.2
       - flask-cors==6.0.1
-      - flask-markdown==0.3
       - hf-xet==1.1.10
       - huggingface-hub==0.35.0
       - idna==3.10

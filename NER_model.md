@@ -301,6 +301,66 @@ python app.py 5050
 Testing offline
 - Run the offline test: `pytest tests/offline_test.py` (this script verifies each model loads from the saved `models/` directory and runs one sample inference).
 
+### Requirements guidance
+
+The repository includes two artifacts to reproduce the environment:
+
+- `environment.yml` — a conda environment export that reproduces exact binary builds (recommended for PyTorch/NumPy/CUDA compatibility).
+- `requirements-lock.txt` — a cleaned, portable pip requirements file for pip-based installs (this file replaces an earlier freeze that contained non-portable file:// paths).
+
+Use the pip file for quick pip installs:
+
+```bash
+python -m pip install -r requirements-clean.txt
+```
+
+Or recreate the conda environment for exact binary parity:
+
+```bash
+conda env create -f environment.yml
+conda activate py311_nlp
+```
+
 If you prefer I can create a Docker image that includes all models preloaded, or I can vendor the models into the repo if you want them checked into local storage (not recommended due to size).
 
 For a minimal quick-start (how to start the server offline on port 5050) see the small snippet in the project `README.md` under "Quick: Run Offline (local models)".
+
+## 11. CI & Contribution (quick reference)
+
+We've added a lightweight GitHub Actions workflow to help validate offline behavior on pushes and PRs to `main`:
+
+- Workflow file: `.github/workflows/offline-check.yml`
+- What it does:
+     - Checks out the code and sets up Python 3.11
+          - Installs `requirements-clean.txt` with `pip` if present
+     - Downloads the spaCy `en_core_web_sm` model for the runner
+     - Runs `pytest tests/offline_test.py` with offline environment variables set (`TRANSFORMERS_OFFLINE=1`, `HF_DATASETS_OFFLINE=1`, `HF_HOME` set to the workspace)
+     - Verifies import/startup by importing the `bionlp` package (a smoke check equivalent to running `run_offline.sh` without opening a listening port)
+
+Branch & PR workflow used by maintainers/contributors:
+
+1. Create a feature branch from `main`:
+
+```bash
+git checkout -b feature/your-change
+```
+
+2. Make changes, run tests locally, then push and open a PR:
+
+```bash
+git add .
+git commit -m "feat: ..."
+git push origin feature/your-change
+# open a PR on GitHub and select reviewers
+```
+
+3. The CI workflow will run the offline smoke tests. When the PR is green, merge into `main`.
+
+Files added alongside this doc to support reproducibility:
+
+ - `requirements-clean.txt` — pip requirements used by the CI job (cleaned, portable)
+- `environment.yml` — conda export to reproduce exact binary builds locally
+- `run_offline.sh` — helper to set offline env vars and start the app (defaults to port `5050`)
+- `CONTRIBUTING.md` — short reproduction and contribution guide
+
+If you prefer a PR to be opened for you, create the branch and I can open the PR automatically.

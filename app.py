@@ -2,7 +2,11 @@ import flask
 from flask import request, jsonify, abort
 from flask import render_template
 from flask_cors import CORS, cross_origin
-from flaskext.markdown import Markdown
+try:
+    # Prefer the standard markdown package to render markdown in templates.
+    import markdown as _markdown
+except Exception:
+    _markdown = None
 
 from bionlp import nlp, disease_service, chemical_service, genetic_service
 
@@ -13,7 +17,18 @@ colors = {"DISEASE": "linear-gradient(90deg, #aa9cfc, #fc9ce7)",
           "GENETIC": "linear-gradient(90deg, #c21500, #ffc500)"}
 
 app = flask.Flask(__name__)
-Markdown(app)
+if _markdown is not None:
+    @app.template_filter('markdown')
+    def _markdown_filter(s):
+        try:
+            return _markdown.markdown(s)
+        except Exception:
+            return s
+else:
+    # fallback: render nothing special
+    @app.template_filter('markdown')
+    def _markdown_filter(s):
+        return s
 CORS(app, support_credentials=True, resources={r"/*": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
@@ -58,5 +73,37 @@ def post_search_entities():
 
     return jsonify(html=entities_html, entities=normalized_ents)
 
+
+# health endpoint for monitoring / readiness checks
+@app.route('/health', methods=['GET'])
+@cross_origin()
+def health():
+    return jsonify(status='ok')
+
+
+import os
+import sys
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    # Print runtime versions to help debug binary/API mismatches
+    try:
+        import torch as _torch
+        import transformers as _trans
+        print(f"torch version: {_torch.__version__}, transformers version: {_trans.__version__}")
+        # Simple heuristic warning for major mismatches
+        t_major = int(_torch.__version__.split('.')[0]) if _torch.__version__ else 0
+        tr_major = int(_trans.__version__.split('.')[0]) if _trans.__version__ else 0
+        if t_major < 2 and tr_major >= 4:
+            print('WARNING: Detected older torch version; consider using torch>=2.0 for best compatibility with transformers')
+    except Exception:
+        print('Could not import torch/transformers for version check')
+    # Priority: command-line argument > environment variable > default 5000
+    port = 5000
+    # Check for command-line argument
+    if len(sys.argv) > 1:
+        try:
+            port = int(sys.argv[1])
+        except Exception:
+            pass
+    # Check for environment variable
+    port = int(os.environ.get('PORT', port))
+    app.run(debug=True, host='0.0.0.0', port=port)
