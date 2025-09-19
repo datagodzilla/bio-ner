@@ -3,21 +3,10 @@ from flask import request, jsonify, abort
 from flask import render_template
 from flask_cors import CORS, cross_origin
 try:
-    from flaskext.markdown import Markdown
+    # Prefer the standard markdown package to render markdown in templates.
+    import markdown as _markdown
 except Exception:
-    # Flask 3 removed `Markup` import used by Flask-Markdown; provide a no-op
-    # fallback so the app can run under newer Flask versions. Features that
-    # require Markdown rendering will be disabled when this fallback is used.
-    class Markdown:  # simple shim
-        def __init__(self, app=None):
-            if app is not None:
-                self.init_app(app)
-
-        def init_app(self, app):
-            # register a dummy filter that returns the input unchanged
-            @app.template_filter('markdown')
-            def _markdown_noop(s):
-                return s
+    _markdown = None
 
 from bionlp import nlp, disease_service, chemical_service, genetic_service
 
@@ -28,7 +17,18 @@ colors = {"DISEASE": "linear-gradient(90deg, #aa9cfc, #fc9ce7)",
           "GENETIC": "linear-gradient(90deg, #c21500, #ffc500)"}
 
 app = flask.Flask(__name__)
-Markdown(app)
+if _markdown is not None:
+    @app.template_filter('markdown')
+    def _markdown_filter(s):
+        try:
+            return _markdown.markdown(s)
+        except Exception:
+            return s
+else:
+    # fallback: render nothing special
+    @app.template_filter('markdown')
+    def _markdown_filter(s):
+        return s
 CORS(app, support_credentials=True, resources={r"/*": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 

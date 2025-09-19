@@ -28,6 +28,22 @@ jobs:
           python -c "import spacy; import importlib; print('spacy', spacy.__version__)"
           python -c "import spacy; spacy.cli.download('en_core_web_sm')"
 
+      - name: Start Flask app in background
+        env:
+          TRANSFORMERS_OFFLINE: 1
+          HF_DATASETS_OFFLINE: 1
+          HF_HOME: ${{ github.workspace }}/.hf_home
+        run: |
+          python -u app.py 5050 &
+          echo $! > server.pid
+          sleep 5
+
+      - name: Healthcheck
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5050/health || true)
+          echo "health http code: $HTTP_CODE"
+          if [ "$HTTP_CODE" != "200" ]; then exit 1; fi
+
       - name: Run offline tests
         env:
           TRANSFORMERS_OFFLINE: 1
