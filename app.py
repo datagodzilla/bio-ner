@@ -74,6 +74,13 @@ def post_search_entities():
     return jsonify(html=entities_html, entities=normalized_ents)
 
 
+# health endpoint for monitoring / readiness checks
+@app.route('/health', methods=['GET'])
+@cross_origin()
+def health():
+    return jsonify(status='ok')
+
+
 import os
 import sys
 if __name__ == '__main__':

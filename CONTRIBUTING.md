@@ -15,7 +15,7 @@ conda install -c pytorch -c conda-forge pytorch=2.6 cpuonly -y
 
 # 3) Install Python packages via pip
 # For pip-based installs use the cleaned, portable requirements file:
-python -m pip install -r requirements-lock.txt
+python -m pip install -r requirements-clean.txt
 
 # 4) (Optional) install spaCy English model
 python -m spacy download en_core_web_sm

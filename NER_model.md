@@ -311,7 +311,7 @@ The repository includes two artifacts to reproduce the environment:
 Use the pip file for quick pip installs:
 
 ```bash
-python -m pip install -r requirements-lock.txt
+python -m pip install -r requirements-clean.txt
 ```
 
 Or recreate the conda environment for exact binary parity:
@@ -332,7 +332,7 @@ We've added a lightweight GitHub Actions workflow to help validate offline behav
 - Workflow file: `.github/workflows/offline-check.yml`
 - What it does:
      - Checks out the code and sets up Python 3.11
-     - Installs `requirements-lock.txt` with `pip` if present
+          - Installs `requirements-clean.txt` with `pip` if present
      - Downloads the spaCy `en_core_web_sm` model for the runner
      - Runs `pytest tests/offline_test.py` with offline environment variables set (`TRANSFORMERS_OFFLINE=1`, `HF_DATASETS_OFFLINE=1`, `HF_HOME` set to the workspace)
      - Verifies import/startup by importing the `bionlp` package (a smoke check equivalent to running `run_offline.sh` without opening a listening port)
@@ -358,7 +358,7 @@ git push origin feature/your-change
 
 Files added alongside this doc to support reproducibility:
 
-- `requirements-lock.txt` — pip freeze snapshot used by the CI job
+ - `requirements-clean.txt` — pip requirements used by the CI job (cleaned, portable)
 - `environment.yml` — conda export to reproduce exact binary builds locally
 - `run_offline.sh` — helper to set offline env vars and start the app (defaults to port `5050`)
 - `CONTRIBUTING.md` — short reproduction and contribution guide

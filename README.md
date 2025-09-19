@@ -40,7 +40,7 @@ Use the cleaned pip requirements for portable pip installs (this replaces the ol
 
 ```bash
 # pip (portable)
-python -m pip install -r requirements-lock.txt
+python -m pip install -r requirements-clean.txt
 ```
 
 For exact binary reproducibility (recommended for PyTorch/NumPy/CUDA), recreate the conda environment from `environment.yml`:
