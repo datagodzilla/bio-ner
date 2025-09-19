@@ -23,9 +23,12 @@ def unique_terms(entities):
 
 def check_existant_model(ent):
     flag_ent = False
-    if path.isfile('./models/' + ent + '/pytorch_model.bin') and path.isfile(
-            './models/' + ent + '/config.json') and path.isfile(
-        './models/' + ent + '/tokenizer_config.json') and path.isfile(
-        './models/' + ent + '/vocab.txt'):
+    model_dir = './models/' + ent + '/'
+    # accept either PyTorch bin or safetensors format for model weights
+    has_weights = path.isfile(path.join(model_dir, 'pytorch_model.bin')) or path.isfile(path.join(model_dir, 'model.safetensors'))
+    # common config/tokenizer files
+    has_config = path.isfile(path.join(model_dir, 'config.json'))
+    has_tokenizer = path.isfile(path.join(model_dir, 'tokenizer_config.json')) or path.isfile(path.join(model_dir, 'tokenizer.json')) or path.isfile(path.join(model_dir, 'vocab.txt'))
+    if has_weights and has_config and has_tokenizer:
         flag_ent = True
     return flag_ent

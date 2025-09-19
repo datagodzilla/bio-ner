@@ -19,6 +19,21 @@ Package bionlp is mainly proposed to be used as part of the webpage or the annot
 
 bionlp package can be found on [bio-nlp/bionlp](https://github.com/librairy/bio-ner/tree/master/bionlp)
 
+### Quick: Run Offline (local models)
+
+If you've downloaded the HF models into `./models/` and created the `py311_nlp` environment, run the app offline as follows:
+
+```bash
+conda activate py311_nlp
+export TRANSFORMERS_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
+export HF_HOME="$PWD/.hf_home"
+# start the Flask app on port 5050
+PORT=5050 python app.py
+```
+
+This starts the web UI and API on port `5050`. The code will prefer local model copies under `./models/` and will not contact HuggingFace if the environment variables above are set.
+
 ## Solr Database for Normalization
 Solr Database is available online at:
  * Diseases: http://librairy.linkeddata.es/solr/#/bioner-diseases/core-overview
