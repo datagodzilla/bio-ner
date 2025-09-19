@@ -1,0 +1,37 @@
+name: Offline Smoke Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  offline-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install pip deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements-lock.txt ]; then pip install -r requirements-lock.txt; fi
+
+      - name: Ensure spaCy model available
+        run: |
+          python -c "import spacy; import importlib; print('spacy', spacy.__version__)"
+          python -c "import spacy; spacy.cli.download('en_core_web_sm')"
+
+      - name: Run offline tests
+        env:
+          TRANSFORMERS_OFFLINE: 1
+          HF_DATASETS_OFFLINE: 1
+          HF_HOME: ${{ github.workspace }}/.hf_home
+        run: |
+          pytest tests/offline_test.py -q
