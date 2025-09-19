@@ -2,7 +2,22 @@ import flask
 from flask import request, jsonify, abort
 from flask import render_template
 from flask_cors import CORS, cross_origin
-from flaskext.markdown import Markdown
+try:
+    from flaskext.markdown import Markdown
+except Exception:
+    # Flask 3 removed `Markup` import used by Flask-Markdown; provide a no-op
+    # fallback so the app can run under newer Flask versions. Features that
+    # require Markdown rendering will be disabled when this fallback is used.
+    class Markdown:  # simple shim
+        def __init__(self, app=None):
+            if app is not None:
+                self.init_app(app)
+
+        def init_app(self, app):
+            # register a dummy filter that returns the input unchanged
+            @app.template_filter('markdown')
+            def _markdown_noop(s):
+                return s
 
 from bionlp import nlp, disease_service, chemical_service, genetic_service
 
@@ -58,5 +73,30 @@ def post_search_entities():
 
     return jsonify(html=entities_html, entities=normalized_ents)
 
+
+import os
+import sys
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    # Print runtime versions to help debug binary/API mismatches
+    try:
+        import torch as _torch
+        import transformers as _trans
+        print(f"torch version: {_torch.__version__}, transformers version: {_trans.__version__}")
+        # Simple heuristic warning for major mismatches
+        t_major = int(_torch.__version__.split('.')[0]) if _torch.__version__ else 0
+        tr_major = int(_trans.__version__.split('.')[0]) if _trans.__version__ else 0
+        if t_major < 2 and tr_major >= 4:
+            print('WARNING: Detected older torch version; consider using torch>=2.0 for best compatibility with transformers')
+    except Exception:
+        print('Could not import torch/transformers for version check')
+    # Priority: command-line argument > environment variable > default 5000
+    port = 5000
+    # Check for command-line argument
+    if len(sys.argv) > 1:
+        try:
+            port = int(sys.argv[1])
+        except Exception:
+            pass
+    # Check for environment variable
+    port = int(os.environ.get('PORT', port))
+    app.run(debug=True, host='0.0.0.0', port=port)

@@ -34,6 +34,23 @@ PORT=5050 python app.py
 
 This starts the web UI and API on port `5050`. The code will prefer local model copies under `./models/` and will not contact HuggingFace if the environment variables above are set.
 
+### Requirements (pip vs conda)
+
+Use the cleaned pip requirements for portable pip installs (this replaces the old frozen `requirements-lock.txt` that contained non-portable local paths):
+
+```bash
+# pip (portable)
+python -m pip install -r requirements-lock.txt
+```
+
+For exact binary reproducibility (recommended for PyTorch/NumPy/CUDA), recreate the conda environment from `environment.yml`:
+
+```bash
+# conda (reproducible binaries)
+conda env create -f environment.yml
+conda activate py311_nlp
+```
+
 ## Solr Database for Normalization
 Solr Database is available online at:
  * Diseases: http://librairy.linkeddata.es/solr/#/bioner-diseases/core-overview
